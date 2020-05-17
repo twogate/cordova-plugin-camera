@@ -279,7 +279,7 @@ static NSString* toBase64(NSData* data) {
 - (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
     if([navigationController isKindOfClass:[UIImagePickerController class]]){
-        
+
         // If popoverWidth and popoverHeight are specified and are greater than 0, then set popover size, else use apple's default popoverSize
         NSDictionary* options = self.pickerController.pictureOptions.popoverOptions;
         if(options) {
@@ -290,8 +290,8 @@ static NSString* toBase64(NSData* data) {
                 [viewController setPreferredContentSize:CGSizeMake(popoverWidth,popoverHeight)];
             }
         }
-        
-        
+
+
         UIImagePickerController* cameraPicker = (UIImagePickerController*)navigationController;
 
         if(![cameraPicker.mediaTypes containsObject:(NSString*)kUTTypeImage]){
@@ -512,12 +512,17 @@ static NSString* toBase64(NSData* data) {
 
 - (CDVPluginResult*)resultForVideo:(NSDictionary*)info
 {
-    NSString* moviePath = [[info objectForKey:UIImagePickerControllerMediaURL] absoluteString];
-    // On iOS 13 the movie path becomes inaccessible, create and return a copy
-    if (IsAtLeastiOSVersion(@"13.0")) {
-        moviePath = [self createTmpVideo:[[info objectForKey:UIImagePickerControllerMediaURL] path]];
-    }
-    return [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:moviePath];
+    NSString* moviePath = [[info objectForKey:UIImagePickerControllerMediaURL] path];
+
+    NSArray* spliteArray = [moviePath componentsSeparatedByString: @"/"];
+    NSString* lastString = [spliteArray lastObject];
+    NSError *error;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"tmp"];
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent:lastString];
+    [fileManager copyItemAtPath:moviePath toPath:filePath error:&error];
+
+    return [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:filePath];
 }
 
 - (NSString *) createTmpVideo:(NSString *) moviePath {
